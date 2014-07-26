@@ -543,11 +543,25 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
 {
-    [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
-           responseTarget:self
-         responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-           responseObject:windowIdString
-                    flags:0];
+    if (windowIdString != nil) {
+      NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-window -t @%@", windowIdString]
+                                             responseTarget:nil
+                                           responseSelector:nil
+                                             responseObject:nil
+                                                      flags:0 ],
+                             [gateway_ dictionaryForCommand:@"new-window -PF '#{window_id}' -c '#{pane_current_path}'"
+                                             responseTarget:self
+                                           responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
+                                             responseObject:windowIdString
+                                                      flags:0] ];
+      [gateway_ sendCommandList:commands];
+    } else {
+      [gateway_ sendCommand:@"new-window -PF '#{window_id}' -c '#{pane_current_path}'"
+             responseTarget:self
+           responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
+             responseObject:windowIdString
+                      flags:0];
+    }
 }
 
 - (void)movePane:(int)srcPane
